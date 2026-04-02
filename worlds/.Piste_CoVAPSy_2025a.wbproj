@@ -1,0 +1,24 @@
+Webots Project File version R2025a
+perspectives: 000000ff00000000fd0000000300000000000001ca0000039ffc0200000001fb00000012005300630065006e0065005400720065006501000000000000039f0000000000000000000000010000024900000377fc0200000001fb0000001400540065007800740045006400690074006f0072010000001d000003770000009200ffffff00000003000007800000003efc0100000002fb0000000e0043006f006e0073006f006c006501000001d0000005b00000000000000000fb0000001a0043006f006e0073006f006c00650041006c006c0041006c006c0100000000000007800000006900ffffff000005350000037700000004000000040000000100000008fc00000000
+simulationViewPerspectives: 000000ff0000000100000002000003040000001d0100000002010000000101
+sceneTreePerspectives: 000000ff000000010000000300000026000000c0000000000100000002010000000201
+maximizedDockId: -1
+centralWidgetVisible: 1
+orthographicViewHeight: 1
+textFiles: 1 "worlds/Piste_CoVAPSy_2025a.wbt" "controllers/controller_violet/controller_violet.py" "protos/TT02_2025a.proto" "protos/PiCameraModule3.proto" "protos/PiCameraModule2.proto"
+consoles: Console:All:All
+renderingDevicePerspectives: TT02_bleue_C(1):pi_camera;1;0.0666667;0;0
+renderingDevicePerspectives: TT02_bleue_C(10):pi_camera;1;0.0666667;0;0
+renderingDevicePerspectives: TT02_bleue_C(11):pi_camera;1;0.0666667;0;0
+renderingDevicePerspectives: TT02_bleue_C(12):pi_camera;1;0.0666667;0;0
+renderingDevicePerspectives: TT02_bleue_C(2):pi_camera;1;0.0666667;0;0
+renderingDevicePerspectives: TT02_bleue_C(3):pi_camera;1;0.0666667;0;0
+renderingDevicePerspectives: TT02_bleue_C(4):pi_camera;1;0.0666667;0;0
+renderingDevicePerspectives: TT02_bleue_C(5):pi_camera;1;0.0666667;0;0
+renderingDevicePerspectives: TT02_bleue_C(6):pi_camera;1;0.0666667;0;0
+renderingDevicePerspectives: TT02_bleue_C(7):pi_camera;1;0.0666667;0;0
+renderingDevicePerspectives: TT02_bleue_C(8):pi_camera;1;0.0666667;0;0
+renderingDevicePerspectives: TT02_bleue_C(9):pi_camera;1;0.0666667;0;0
+renderingDevicePerspectives: TT02_bleue_C:pi_camera;1;0.0666667;0;0
+renderingDevicePerspectives: TT02_jaune_python:pi_camera;1;0.0666667;0;0
+renderingDevicePerspectives: TT02_violette:pi_camera;1;0.0666667;0;0
