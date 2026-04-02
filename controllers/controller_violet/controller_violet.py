@@ -267,93 +267,98 @@ def calculer_commande_auto(tableau_lidar_filtre, L_entraxe, W_empattement, maxan
 
     return v_cmd, angle_cmd
 
-# =========================
-# Mode de fonctionnement
-# =========================
-modeAuto = False
-
-print("Cliquer sur la vue 3D pour commencer")
-print("a : mode auto")
-print("n : stop")
-
-while driver.step() != -1:
-
-    # Lecture caméra
+def main():
     # =========================
-    if camera_ok:
-        image = camera.getImage()
-
-        # protection contre NULL pointer
-        if image is not None:
-            width = camera.getWidth()
-            height = camera.getHeight()
-
-            # conversion Webots -> numpy
-            image_np = np.frombuffer(image, dtype=np.uint8).reshape((height, width, 4))
-
-            # RGBA -> BGR (OpenCV)
-            image_bgr = cv2.cvtColor(image_np, cv2.COLOR_BGRA2BGR)
-
-            cv2.imshow("Camera TT02", image_bgr)
-            cv2.waitKey(1)
+    # Mode de fonctionnement
     # =========================
-    # Lecture clavier
-    # =========================
-    while True:
-        currentKey = keyboard.getKey()
+    modeAuto = False
+    print("CoVAPSy — Conduite Autonome pour Webots")
+    print("Cliquer sur la vue 3D pour commencer")
+    print("a : mode auto")
+    print("n : stop")
 
-        if currentKey == -1:
-            break
+    while driver.step() != -1:
 
-        elif currentKey == ord('n') or currentKey == ord('N'):
-            if modeAuto:
-                modeAuto = False
-                print("-------- Mode Auto Désactivé -------")
+        # Lecture caméra
+        # =========================
+        if camera_ok:
+            image = camera.getImage()
 
-        elif currentKey == ord('a') or currentKey == ord('A'):
-            if not modeAuto:
-                modeAuto = True
-                print("-------- Mode Auto Activé -------")
+            # protection contre NULL pointer
+            if image is not None:
+                width = camera.getWidth()
+                height = camera.getHeight()
 
-    # =========================
-    # Acquisition LiDAR brut
-    # =========================
-    donnees_lidar_brutes = lidar.getRangeImage()
+                # conversion Webots -> numpy
+                image_np = np.frombuffer(image, dtype=np.uint8).reshape((height, width, 4))
 
-    for i in range(360):
-        if (donnees_lidar_brutes[-i] > 0) and (donnees_lidar_brutes[-i] < 20):
-            tableau_lidar_mm[i - 180] = 1000 * donnees_lidar_brutes[-i]
-        else:
-            tableau_lidar_mm[i - 180] = 0
+                # RGBA -> BGR (OpenCV)
+                image_bgr = cv2.cvtColor(image_np, cv2.COLOR_BGRA2BGR)
 
-    # =========================
-    # Filtre moyenneur AVANT normalisation
-    # =========================
-    tableau_lidar_filtre = filtre_moyenneur(tableau_lidar_mm, fenetre=2)
+                cv2.imshow("Camera TT02", image_bgr)
+                cv2.waitKey(1)
+        # =========================
+        # Lecture clavier
+        # =========================
+        while True:
+            currentKey = keyboard.getKey()
 
-    # =========================
-    # Mode manuel / arrêt
-    # =========================
-    if not modeAuto:
-        set_direction_degre(0)
-        set_vitesse_m_s(0)
-        continue
+            if currentKey == -1:
+                break
 
-    # Programme auto : appel de la fonction autonome
-    v_cmd, angle_cmd = calculer_commande_auto(
-        tableau_lidar_filtre,
-        L_entraxe=L_entraxe,
-        W_empattement=W_empattement,
-        maxangle_degre=maxangle_degre,
-        dmax=3000.0,
-        v_min=0.4,
-        v_max=1.2,
-        debug=True,
-    )
+            elif currentKey == ord('n') or currentKey == ord('N'):
+                if modeAuto:
+                    modeAuto = False
+                    print("-------- Mode Auto Désactivé -------")
 
-    # Si le sens de rotation est inversé, passer -angle_cmd ici :
-    # angle_cmd = -angle_cmd
+            elif currentKey == ord('a') or currentKey == ord('A'):
+                if not modeAuto:
+                    modeAuto = True
+                    print("-------- Mode Auto Activé -------")
 
-    # 7) Commande véhicule
-    set_direction_degre(angle_cmd)
-    set_vitesse_m_s(v_cmd)
+        # =========================
+        # Acquisition LiDAR brut
+        # =========================
+        donnees_lidar_brutes = lidar.getRangeImage()
+
+        for i in range(360):
+            if (donnees_lidar_brutes[-i] > 0) and (donnees_lidar_brutes[-i] < 20):
+                tableau_lidar_mm[i - 180] = 1000 * donnees_lidar_brutes[-i]
+            else:
+                tableau_lidar_mm[i - 180] = 0
+
+        # =========================
+        # Filtre moyenneur AVANT normalisation
+        # =========================
+        tableau_lidar_filtre = filtre_moyenneur(tableau_lidar_mm, fenetre=2)
+
+        # =========================
+        # Mode manuel / arrêt
+        # =========================
+        if not modeAuto:
+            set_direction_degre(0)
+            set_vitesse_m_s(0)
+            continue
+
+        # Programme auto : appel de la fonction autonome
+        v_cmd, angle_cmd = calculer_commande_auto(
+            tableau_lidar_filtre,
+            L_entraxe=L_entraxe,
+            W_empattement=W_empattement,
+            maxangle_degre=maxangle_degre,
+            dmax=3000.0,
+            v_min=0.4,
+            v_max=1.2,
+            debug=True,
+        )
+
+        # Si le sens de rotation est inversé, passer -angle_cmd ici :
+        # angle_cmd = -angle_cmd
+
+        # 7) Commande véhicule
+        set_direction_degre(angle_cmd)
+        set_vitesse_m_s(v_cmd)
+
+
+if __name__ == "__main__":
+    main()
