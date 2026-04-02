@@ -49,7 +49,7 @@ keyboard.enable(sensorTimeStep)
 # Paramètres véhicule
 # =========================
 maxSpeed = 50       # km/h
-maxangle_degre = 19
+maxangle_degre = 18
 
 # --- Paramètres géométriques du TT-02 (à ajuster selon le modèle Webots) ---
 L_entraxe = 0.180  # m  — distance entre roues gauche/droite (voie)
@@ -193,6 +193,80 @@ def differentiel_vers_ackermann(u_g, u_d, L, W, v_min, v_max, angle_max_deg):
 
     return v_cmd, angle_deg
 
+
+def calculer_commande_auto(tableau_lidar_filtre, L_entraxe, W_empattement, maxangle_degre,
+                           dmax=3000.0, v_min=0.4, v_max=1.2, debug=False):
+    """
+    Calcule la commande autonome a partir du lidar filtre.
+
+    Retourne
+    --------
+    v_cmd, angle_cmd
+    """
+
+    # Angles des points pertinents
+    angle_l1    =  60
+    angle_l2    =  70
+    angle_front =   0
+    angle_r1    = -60
+    angle_r2    = -70
+
+    # 1) Lecture des 5 points exacts
+    d_l1    = lire_point_lidar(tableau_lidar_filtre, angle_l1)
+    d_l2    = lire_point_lidar(tableau_lidar_filtre, angle_l2)
+    d_front = lire_point_lidar(tableau_lidar_filtre, angle_front)
+    d_r1    = lire_point_lidar(tableau_lidar_filtre, angle_r1)
+    d_r2    = lire_point_lidar(tableau_lidar_filtre, angle_r2)
+
+    # 2) Normalisation
+    l1 = normaliser_distance(d_l1,    dmax)
+    l2 = normaliser_distance(d_l2,    dmax)
+    f  = normaliser_distance(d_front, dmax)
+    r1 = normaliser_distance(d_r1,    dmax)
+    r2 = normaliser_distance(d_r2,    dmax)
+
+    # 3) Conversion en proximite
+    p_l1 = 1.0 - l1
+    p_l2 = 1.0 - l2
+    p_f  = 1.0 - f
+    p_r1 = 1.0 - r1
+    p_r2 = 1.0 - r2
+
+    # 4) Vecteur d'entree du reseau  [biais, p_l1, p_l2, p_f, p_r1, p_r2]
+    x = np.array([1.0, p_l1, p_l2, p_f, p_r1, p_r2])
+
+    # 5) Reseau virtuel differentiel
+    w_g = np.array([ 1.2,  0.8,  0.8, -1.6, -0.6, -0.6])
+    w_d = np.array([ 1.2, -0.6, -0.6, -1.6,  0.8,  0.8])
+
+    u_g = np.tanh(np.dot(x, w_g))
+    u_d = np.tanh(np.dot(x, w_d))
+
+    # 6) Conversion differentiel -> Ackermann
+    v_cmd, angle_cmd = differentiel_vers_ackermann(
+        u_g, u_d,
+        L=L_entraxe,
+        W=W_empattement,
+        v_min=v_min,
+        v_max=v_max,
+        angle_max_deg=maxangle_degre
+    )
+
+    if debug:
+        # =========================
+        # Debug
+        # =========================
+        print("--------------------------------------------------")
+        print(f"d_l1     = {d_l1:.1f} mm  |  d_l2    = {d_l2:.1f} mm")
+        print(f"d_front  = {d_front:.1f} mm")
+        print(f"d_r1     = {d_r1:.1f} mm  |  d_r2    = {d_r2:.1f} mm")
+        print(f"p_l1={p_l1:.3f}  p_l2={p_l2:.3f}  p_f={p_f:.3f}  p_r1={p_r1:.3f}  p_r2={p_r2:.3f}")
+        print(f"u_g      = {u_g:.3f}  |  u_d     = {u_d:.3f}")
+        print(f"v_cmd    = {v_cmd:.3f} m/s")
+        print(f"angle    = {angle_cmd:.3f} deg")
+
+    return v_cmd, angle_cmd
+
 # =========================
 # Mode de fonctionnement
 # =========================
@@ -265,57 +339,16 @@ while driver.step() != -1:
         set_vitesse_m_s(0)
         continue
 
-    # =========================================================
-    # Programme auto : 5 points exacts + réseau + Ackermann
-    # =========================================================
-
-    # Angles des points pertinents
-    angle_l1    =  60
-    angle_l2    =  70
-    angle_front =   0
-    angle_r1    = -60
-    angle_r2    = -70
-
-    # 1) Lecture des 5 points exacts
-    d_l1    = lire_point_lidar(tableau_lidar_filtre, angle_l1)
-    d_l2    = lire_point_lidar(tableau_lidar_filtre, angle_l2)
-    d_front = lire_point_lidar(tableau_lidar_filtre, angle_front)
-    d_r1    = lire_point_lidar(tableau_lidar_filtre, angle_r1)
-    d_r2    = lire_point_lidar(tableau_lidar_filtre, angle_r2)
-
-    # 2) Normalisation
-    dmax = 3000.0  # mm
-    l1 = normaliser_distance(d_l1,    dmax)
-    l2 = normaliser_distance(d_l2,    dmax)
-    f  = normaliser_distance(d_front, dmax)
-    r1 = normaliser_distance(d_r1,    dmax)
-    r2 = normaliser_distance(d_r2,    dmax)
-
-    # 3) Conversion en proximité
-    p_l1 = 1.0 - l1
-    p_l2 = 1.0 - l2
-    p_f  = 1.0 - f
-    p_r1 = 1.0 - r1
-    p_r2 = 1.0 - r2
-
-    # 4) Vecteur d'entrée du réseau  [biais, p_l1, p_l2, p_f, p_r1, p_r2]
-    x = np.array([1.0, p_l1, p_l2, p_f, p_r1, p_r2])
-
-    # 5) Réseau virtuel différentiel
-    w_g = np.array([ 1.2,  0.8,  0.8, -1.6, -0.6, -0.6])
-    w_d = np.array([ 1.2, -0.6, -0.6, -1.6,  0.8,  0.8])
-
-    u_g = np.tanh(np.dot(x, w_g))
-    u_d = np.tanh(np.dot(x, w_d))
-
-    # 6) Conversion différentiel → Ackermann
-    v_cmd, angle_cmd = differentiel_vers_ackermann(
-        u_g, u_d,
-        L=L_entraxe,
-        W=W_empattement,
+    # Programme auto : appel de la fonction autonome
+    v_cmd, angle_cmd = calculer_commande_auto(
+        tableau_lidar_filtre,
+        L_entraxe=L_entraxe,
+        W_empattement=W_empattement,
+        maxangle_degre=maxangle_degre,
+        dmax=3000.0,
         v_min=0.4,
         v_max=1.2,
-        angle_max_deg=maxangle_degre
+        debug=True,
     )
 
     # Si le sens de rotation est inversé, passer -angle_cmd ici :
@@ -324,15 +357,3 @@ while driver.step() != -1:
     # 7) Commande véhicule
     set_direction_degre(angle_cmd)
     set_vitesse_m_s(v_cmd)
-
-    # =========================
-    # Debug
-    # =========================
-    print("--------------------------------------------------")
-    print(f"d_l1     = {d_l1:.1f} mm  |  d_l2    = {d_l2:.1f} mm")
-    print(f"d_front  = {d_front:.1f} mm")
-    print(f"d_r1     = {d_r1:.1f} mm  |  d_r2    = {d_r2:.1f} mm")
-    print(f"p_l1={p_l1:.3f}  p_l2={p_l2:.3f}  p_f={p_f:.3f}  p_r1={p_r1:.3f}  p_r2={p_r2:.3f}")
-    print(f"u_g      = {u_g:.3f}  |  u_d     = {u_d:.3f}")
-    print(f"v_cmd    = {v_cmd:.3f} m/s")
-    print(f"angle    = {angle_cmd:.3f} deg")
