@@ -29,7 +29,9 @@ W_empattement = 0.250  # m  — distance entre essieu avant et arrière
 # =========================
 # Fonctions véhicule propre à Weebots
 # =========================
-def set_vitesse_m_s(driver, vitesse_m_s):
+driver = Driver()
+
+def set_vitesse_m_s(vitesse_m_s):
     speed = vitesse_m_s * 3.6
     if speed > maxSpeed:
         speed = maxSpeed
@@ -37,7 +39,7 @@ def set_vitesse_m_s(driver, vitesse_m_s):
         speed = 0
     driver.setCruisingSpeed(speed)
 
-def set_direction_degre(driver, angle_degre):
+def set_direction_degre(angle_degre):
     if angle_degre > maxangle_degre:
         angle_degre = maxangle_degre
     elif angle_degre < -maxangle_degre:
@@ -65,7 +67,6 @@ def main():
     # =========================
     # Initialisation du Driver Weebots
     # =========================
-    driver = Driver()
     basicTimeStep = int(driver.getBasicTimeStep())
     sensorTimeStep = 4 * basicTimeStep
     driver.setSteeringAngle(0)
@@ -89,9 +90,7 @@ def main():
     # Initialisation caméra
     # =========================
     camera = driver.getDevice("pi_camera")
-
     camera_ok = False
-
     if camera is None:
         print("Camera non trouvée : pi_camera")
     else:
@@ -102,7 +101,7 @@ def main():
 
 
     while driver.step() != -1:
-
+        # =========================
         # Lecture caméra
         # =========================
         if camera_ok:
@@ -160,11 +159,13 @@ def main():
         # Mode manuel / arrêt
         # =========================
         if not modeAuto:
-            set_direction_degre(driver, 0)
-            set_vitesse_m_s(driver, 0)
+            set_direction_degre(0)
+            set_vitesse_m_s(0)
             continue
-
+        
+        # ========================= 
         # Programme auto : appel de la fonction autonome
+        # =========================
         v_cmd, angle_cmd = calculer_commande_auto(
             tableau_lidar_filtre,
             L_entraxe=L_entraxe,
@@ -180,8 +181,8 @@ def main():
         # angle_cmd = -angle_cmd
 
         # 7) Commande véhicule
-        set_direction_degre(driver, angle_cmd)
-        set_vitesse_m_s(driver, v_cmd)
+        set_direction_degre(angle_cmd)
+        set_vitesse_m_s(v_cmd)
 
 
 if __name__ == "__main__":
