@@ -17,7 +17,7 @@ import sys
 import threading
 import time
 
-from controller_violet import filtre_moyenneur, lire_point_lidar, normaliser_distance, differentiel_vers_ackermann, calculer_commande_auto
+from commun import filtre_moyenneur, lire_point_lidar, normaliser_distance, differentiel_vers_ackermann, calculer_commande_auto
 
 # =========================
 # Paramètres véhicule
