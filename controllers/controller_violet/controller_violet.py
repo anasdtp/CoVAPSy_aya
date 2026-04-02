@@ -14,37 +14,6 @@ from controller import Lidar
 import numpy as np
 import cv2
 
-driver = Driver()
-
-
-basicTimeStep = int(driver.getBasicTimeStep())
-sensorTimeStep = 4 * basicTimeStep
-
-# Initialisation caméra
-camera = driver.getDevice("pi_camera")
-
-camera_ok = False
-
-if camera is None:
-    print("Camera non trouvée : pi_camera")
-else:
-    camera.enable(sensorTimeStep)
-    camera_ok = True
-    print("Camera trouvée :", camera.getName())
-    print("Resolution camera :", camera.getWidth(), "x", camera.getHeight())  
-# =========================
-# Initialisation du LiDAR
-# =========================
-lidar = Lidar("RpLidarA2")
-lidar.enable(sensorTimeStep)
-lidar.enablePointCloud()
-
-# =========================
-# Initialisation clavier
-# =========================
-keyboard = driver.getKeyboard()
-keyboard.enable(sensorTimeStep)
-
 # =========================
 # Paramètres véhicule
 # =========================
@@ -54,34 +23,6 @@ maxangle_degre = 18
 # --- Paramètres géométriques du TT-02 (à ajuster selon le modèle Webots) ---
 L_entraxe = 0.180  # m  — distance entre roues gauche/droite (voie)
 W_empattement = 0.250  # m  — distance entre essieu avant et arrière
-
-driver.setSteeringAngle(0)
-driver.setCruisingSpeed(0)
-
-tableau_lidar_mm = [0] * 360
-
-# =========================
-# Fonctions véhicule
-# =========================
-def set_vitesse_m_s(vitesse_m_s):
-    speed = vitesse_m_s * 3.6
-    if speed > maxSpeed:
-        speed = maxSpeed
-    if speed < 0:
-        speed = 0
-    driver.setCruisingSpeed(speed)
-
-def set_direction_degre(angle_degre):
-    if angle_degre > maxangle_degre:
-        angle_degre = maxangle_degre
-    elif angle_degre < -maxangle_degre:
-        angle_degre = -maxangle_degre
-
-    angle_rad = -angle_degre * np.pi / 180.0
-    driver.setSteeringAngle(angle_rad)
-
-def recule():
-    driver.setCruisingSpeed(-1)
 
 # =========================
 # Fonctions traitement LiDAR
@@ -267,6 +208,34 @@ def calculer_commande_auto(tableau_lidar_filtre, L_entraxe, W_empattement, maxan
 
     return v_cmd, angle_cmd
 
+
+
+# =========================
+# Fonctions véhicule propre à Weebots
+# =========================
+def set_vitesse_m_s(driver, vitesse_m_s):
+    speed = vitesse_m_s * 3.6
+    if speed > maxSpeed:
+        speed = maxSpeed
+    if speed < 0:
+        speed = 0
+    driver.setCruisingSpeed(speed)
+
+def set_direction_degre(driver, angle_degre):
+    if angle_degre > maxangle_degre:
+        angle_degre = maxangle_degre
+    elif angle_degre < -maxangle_degre:
+        angle_degre = -maxangle_degre
+
+    angle_rad = -angle_degre * np.pi / 180.0
+    driver.setSteeringAngle(angle_rad)
+
+def recule(driver):
+    driver.setCruisingSpeed(-1)
+    
+# =========================
+# Fonctions d'execution pour Weebots
+# =========================
 def main():
     # =========================
     # Mode de fonctionnement
@@ -276,6 +245,45 @@ def main():
     print("Cliquer sur la vue 3D pour commencer")
     print("a : mode auto")
     print("n : stop")
+    
+    # =========================
+    # Initialisation du Driver Weebots
+    # =========================
+    driver = Driver()
+    basicTimeStep = int(driver.getBasicTimeStep())
+    sensorTimeStep = 4 * basicTimeStep
+    driver.setSteeringAngle(0)
+    driver.setCruisingSpeed(0)
+    
+    # =========================
+    # Initialisation du LiDAR
+    # =========================
+    lidar = Lidar("RpLidarA2")
+    lidar.enable(sensorTimeStep)
+    lidar.enablePointCloud()
+    tableau_lidar_mm = [0] * 360
+    
+    # =========================
+    # Initialisation clavier
+    # =========================
+    keyboard = driver.getKeyboard()
+    keyboard.enable(sensorTimeStep)
+    
+    # =========================
+    # Initialisation caméra
+    # =========================
+    camera = driver.getDevice("pi_camera")
+
+    camera_ok = False
+
+    if camera is None:
+        print("Camera non trouvée : pi_camera")
+    else:
+        camera.enable(sensorTimeStep)
+        camera_ok = True
+        print("Camera trouvée :", camera.getName())
+        print("Resolution camera :", camera.getWidth(), "x", camera.getHeight())  
+
 
     while driver.step() != -1:
 
@@ -336,8 +344,8 @@ def main():
         # Mode manuel / arrêt
         # =========================
         if not modeAuto:
-            set_direction_degre(0)
-            set_vitesse_m_s(0)
+            set_direction_degre(driver, 0)
+            set_vitesse_m_s(driver, 0)
             continue
 
         # Programme auto : appel de la fonction autonome
@@ -356,8 +364,8 @@ def main():
         # angle_cmd = -angle_cmd
 
         # 7) Commande véhicule
-        set_direction_degre(angle_cmd)
-        set_vitesse_m_s(v_cmd)
+        set_direction_degre(driver, angle_cmd)
+        set_vitesse_m_s(driver, v_cmd)
 
 
 if __name__ == "__main__":

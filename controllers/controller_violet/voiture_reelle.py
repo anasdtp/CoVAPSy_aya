@@ -17,4 +17,44 @@ import sys
 import threading
 import time
 
+from controller_violet import filtre_moyenneur, lire_point_lidar, normaliser_distance, differentiel_vers_ackermann, calculer_commande_auto
 
+# =========================
+# Paramètres véhicule
+# =========================
+maxSpeed = 50       # km/h
+maxangle_degre = 18
+
+# --- Paramètres géométriques du TT-02 (à ajuster selon le modèle Webots) ---
+L_entraxe = 0.180  # m  — distance entre roues gauche/droite (voie)
+W_empattement = 0.250  # m  — distance entre essieu avant et arrière
+
+
+
+# ============================================================
+# Configuration du logging
+# ============================================================
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    datefmt="%H:%M:%S",
+    handlers=[
+        logging.StreamHandler(sys.stdout),
+        logging.FileHandler("covapsy.log", encoding="utf-8"),
+    ]
+)
+logger = logging.getLogger(__name__)
+
+
+def main():
+    # =========================
+    # Mode de fonctionnement
+    # =========================
+    modeAuto = False
+    print("CoVAPSy — Conduite Autonome pour Webots")
+    print("Cliquer sur la vue 3D pour commencer")
+    print("a : mode auto")
+    print("n : stop")
+
+if __name__ == "__main__":
+    main()
