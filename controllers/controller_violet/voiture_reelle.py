@@ -24,6 +24,7 @@ import logging
 import sys
 import threading
 import time
+import cv2
 
 from commun import filtre_moyenneur, lire_point_lidar, normaliser_distance, differentiel_vers_ackermann, calculer_commande_auto
 
@@ -146,8 +147,22 @@ def main():
         # Lecture caméra
         # =========================
                 # (non implémentée dans cette version)
-        # if camera_ok:
-                
+            if camera_ok:
+                image = camera.getImage()
+
+                # protection contre NULL pointer
+                if image is not None:
+                    width = camera.getWidth()
+                    height = camera.getHeight()
+
+                    # conversion Webots -> numpy
+                    image_np = np.frombuffer(image, dtype=np.uint8).reshape((height, width, 4))
+
+                    # RGBA -> BGR (OpenCV)
+                    image_bgr = cv2.cvtColor(image_np, cv2.COLOR_BGRA2BGR)
+
+                    cv2.imshow("Camera TT02", image_bgr)
+                    cv2.waitKey(1)  
         # =========================
         # Acquisition LiDAR et Filtre moyenneur AVANT normalisation
         # =========================
